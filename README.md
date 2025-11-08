@@ -31,9 +31,17 @@ repositories {
 }
 
 dependencies {
-    modImplementation("moe.nea.jarvis:jarvis-api:1.0.1")
-	include("moe.nea.jarvis:jarvis-fabric:1.0.1")
-	modLocalRuntime("moe.nea.jarvis:jarvis-fabric:1.0.1")
+    modImplementation("moe.nea.jarvis:jarvis-api:2.0.0")
+	include("moe.nea.jarvis:jarvis-fabric:2.0.0")
+	modLocalRuntime("moe.nea.jarvis:jarvis-fabric:2.0.0")
+}
+```
+
+```
+dependencies {
+    modImplementation("moe.nea.jarvis:jarvis-api:2.0.0")
+	include("moe.nea.jarvis:jarvis-forge:2.0.0")
+	modLocalRuntime("moe.nea.jarvis:jarvis-forge:2.0.0")
 }
 ```
 
