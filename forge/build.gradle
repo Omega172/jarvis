@@ -32,7 +32,7 @@ dependencies {
 
     common(project(path: ":common", configuration: "namedElements"))
     shadowCommon(project(path: ":common", configuration: "transformProductionForge"))
-    shadowCommon(project(path: ":api", configuration: "transformProductionFabric"))
+    shadowCommon(project(path: ":api", configuration: "transformProductionForge"))
     compileOnly("net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}")
 }
 
@@ -54,7 +54,7 @@ shadowJar {
 }
 
 remapJar {
-    input.set shadowJar.archiveFile
+    inputFile.set shadowJar.archiveFile
     dependsOn shadowJar
     archiveClassifier = null
 }
@@ -73,8 +73,6 @@ sourcesJar {
 }
 
 
-components.java {
-    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
-        skip()
-    }
+shadow {
+    addShadowVariantIntoJavaComponent = false
 }
