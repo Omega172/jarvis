@@ -1,9 +1,12 @@
 package moe.nea.jarvis.impl;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,12 +19,12 @@ public class JarvisConfigSearch extends Screen {
     private final List<ConfigOptionWithCustody> allOptions;
     private final Screen parentScreen;
     private List<ConfigOptionWithCustody> filteredOptions = new ArrayList<>();
-    private TextFieldWidget searchField;
+    private EditBox searchField;
     private String searchQuery = "";
     private int searchFieldWidth;
 
     public JarvisConfigSearch(JarvisContainer container, Screen parentScreen, List<ConfigOptionWithCustody> allOptions) {
-        super(Text.translatable("jarvis.configlist"));
+        super(Component.translatable("jarvis.configlist"));
         this.container = container;
         this.allOptions = allOptions;
         this.parentScreen = parentScreen;
@@ -32,24 +35,24 @@ public class JarvisConfigSearch extends Screen {
 
     @Override
     protected void init() {
-        assert client != null;
+        assert minecraft != null;
         super.init();
         searchFieldWidth = Math.min(400, width / 3);
-        addDrawableChild(searchField = new TextFieldWidget(client.textRenderer, width / 2 - searchFieldWidth / 2,
-            10, searchFieldWidth, 18, Text.translatable("jarvis.configlist.suggestion")));
-        searchField.setText(searchQuery);
+        addWidget(searchField = new EditBox(minecraft.font, width / 2 - searchFieldWidth / 2,
+            10, searchFieldWidth, 18, Component.translatable("jarvis.configlist.suggestion")));
+        searchField.setValue(searchQuery);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        assert client != null;
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        assert minecraft != null;
         super.render(context, mouseX, mouseY, delta);
         context.fill(0, 0, width, height, 0x50000000);
         context.enableScissor(0, 35, width, height);
-        context.getMatrices().pushMatrix();
+        context.pose().pushMatrix();
 
         int left = width / 2 - searchFieldWidth / 2;
-        context.getMatrices().translate(left, 35F - (float) scroll);
+        context.pose().translate(left, 35F - (float) scroll);
         mouseY -= 35 - scroll;
         mouseX -= left;
         for (ConfigOptionWithCustody filteredOption : filteredOptions) {
@@ -59,24 +62,26 @@ public class JarvisConfigSearch extends Screen {
                 context.fill(0, 0, searchFieldWidth, height, 0x50A0A0A0);
             }
 
-            context.drawText(client.textRenderer, Text.literal("").append(container.getModName(filteredOption.plugin())).append(Text.literal(" > ")).append(filteredOption.option().title()), 2, 2, -1, false);
+            context.drawString(minecraft.font, Component.literal("")
+                .append(container.getModName(filteredOption.plugin()))
+                .append(Component.literal(" > ")).append(filteredOption.option().title()), 2, 2, -1, false);
             int offset = 15;
-            for (Text descriptionLine : filteredOption.option().description()) {
-                context.drawText(client.textRenderer, descriptionLine, 2, offset, 0xFF808080, true);
+            for (var descriptionLine : filteredOption.option().description()) {
+                context.drawString(minecraft.font, descriptionLine, 2, offset, 0xFF808080, true);
                 offset += 10;
             }
             mouseY -= height;
-            context.getMatrices().translate(0, height);
+            context.pose().translate(0, height);
         }
 
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
         context.disableScissor();
     }
 
     @Override
-    public void close() {
-        assert client != null;
-        client.setScreen(parentScreen);
+    public void onClose() {
+        assert minecraft != null;
+        minecraft.setScreen(parentScreen);
     }
 
     @Override
@@ -101,17 +106,17 @@ public class JarvisConfigSearch extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        assert client != null;
-        if (super.mouseClicked(mouseX, mouseY, button)) return true;
-        mouseY -= 35 - scroll;
+    public boolean mouseClicked(MouseButtonEvent mouseButtonEvent, boolean bl) {
+        assert minecraft != null;
+        if (super.mouseClicked(mouseButtonEvent, bl)) return true;
+        var mouseY = mouseButtonEvent.y() - (35 - scroll);
         int left = width / 2 - searchFieldWidth / 2;
-        mouseX -= left;
+        var mouseX = mouseButtonEvent.x() - left;
         for (ConfigOptionWithCustody filteredOption : filteredOptions) {
             int height = 15 + filteredOption.option().description().size() * 10;
             if (0 <= mouseX && mouseX < searchFieldWidth &&
                 0 <= mouseY && mouseY < height) {
-                client.setScreen(filteredOption.option().jumpTo(this));
+                minecraft.setScreen(filteredOption.option().jumpTo(this));
                 return true;
             }
             mouseY -= height;
@@ -120,11 +125,11 @@ public class JarvisConfigSearch extends Screen {
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
-        String before = searchField.getText();
+    public boolean charTyped(CharacterEvent characterEvent) {
+        String before = searchField.getValue();
         searchField.setFocused(true);
-        boolean ret = super.charTyped(chr, modifiers);
-        String after = searchField.getText();
+        boolean ret = super.charTyped(characterEvent);
+        String after = searchField.getValue();
         if (!Objects.equals(before, after)) {
             updateSearchResults(after);
         }
@@ -132,10 +137,10 @@ public class JarvisConfigSearch extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        String before = searchField.getText();
-        boolean ret = super.keyPressed(keyCode, scanCode, modifiers);
-        String after = searchField.getText();
+    public boolean keyPressed(KeyEvent keyEvent) {
+        String before = searchField.getValue();
+        boolean ret = super.keyPressed(keyEvent);
+        String after = searchField.getValue();
         if (!Objects.equals(before, after)) {
             updateSearchResults(after);
         }
@@ -163,12 +168,12 @@ public class JarvisConfigSearch extends Screen {
         ArrayList<String> objects = new ArrayList<>();
         var option = withCustody.option();
         objects.add(option.title().getString().toLowerCase(Locale.ROOT));
-        Text category = option.category();
+        Component category = option.category();
         if (category != null) {
             objects.add(category.getString().toLowerCase(Locale.ROOT));
         }
         objects.add(container.getModName(withCustody.plugin()).getString().toLowerCase(Locale.ROOT));
-        for (Text text : option.description()) {
+        for (var text : option.description()) {
             objects.add(text.getString().toLowerCase(Locale.ROOT));
         }
         return objects;

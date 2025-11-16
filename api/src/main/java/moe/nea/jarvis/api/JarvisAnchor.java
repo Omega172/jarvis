@@ -1,11 +1,11 @@
 package moe.nea.jarvis.api;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.Codec;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.StringIdentifiable;
+import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;
 
-public enum JarvisAnchor implements StringIdentifiable {
+public enum JarvisAnchor implements StringRepresentable {
     TOP_LEFT(0, 0, 8),
     TOP_CENTER(0.5F, 0, 7),
     TOP_RIGHT(1, 0, 6),
@@ -16,7 +16,7 @@ public enum JarvisAnchor implements StringIdentifiable {
     BOTTOM_CENTER(0.5F, 1F, 1),
     BOTTOM_RIGHT(1F, 1F, 0),
     ;
-    public static final Codec<JarvisAnchor> CODEC = StringIdentifiable.createCodec(JarvisAnchor::values);
+    public static final Codec<JarvisAnchor> CODEC = StringRepresentable.fromEnum(JarvisAnchor::values);
     private final int opposite;
     private final float xPosition;
     private final float yPosition;
@@ -39,7 +39,7 @@ public enum JarvisAnchor implements StringIdentifiable {
         return yPosition;
     }
 
-    public void transformTo(@NotNull JarvisAnchor targetCoordinateSpace, @NotNull MatrixStack matrixStack, double width, double height) {
+    public void transformTo(@NotNull JarvisAnchor targetCoordinateSpace, @NotNull PoseStack matrixStack, double width, double height) {
         matrixStack.translate(
             width * (targetCoordinateSpace.xPosition - xPosition),
             height * (targetCoordinateSpace.yPosition - yPosition),
@@ -59,7 +59,7 @@ public enum JarvisAnchor implements StringIdentifiable {
     }
 
     @Override
-    public String asString() {
+    public String getSerializedName() {
         return name();
     }
 }

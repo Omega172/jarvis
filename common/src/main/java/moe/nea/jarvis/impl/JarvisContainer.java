@@ -1,16 +1,16 @@
 package moe.nea.jarvis.impl;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import moe.nea.jarvis.api.Jarvis;
 import moe.nea.jarvis.api.JarvisHud;
 import moe.nea.jarvis.api.JarvisPlugin;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -27,7 +27,8 @@ import java.util.stream.Stream;
 public class JarvisContainer extends Jarvis {
     public List<JarvisPlugin> plugins = new ArrayList<>();
     public LoaderSupport loaderSupport;
-    public KeyBinding hudKeyBinding = new KeyBinding("key.jarvis.open-gui-editor", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, "key.jarvis");
+    public KeyMapping hudKeyBinding = new KeyMapping("key.jarvis.open-gui-editor", InputConstants.Type.KEYSYM,
+        GLFW.GLFW_KEY_RIGHT_SHIFT, new KeyMapping.Category(ResourceLocation.fromNamespaceAndPath("jarvis", "keys")));
 
     public LoaderSupport getLoaderSupport() {
         return loaderSupport;
@@ -46,7 +47,7 @@ public class JarvisContainer extends Jarvis {
     }
 
     @Override
-    public @Unmodifiable @NotNull Map<@NotNull Identifier, @NotNull JarvisHud> getIndexedHuds() {
+    public @Unmodifiable @NotNull Map<@NotNull ResourceLocation, @NotNull JarvisHud> getIndexedHuds() {
         if (indexedHuds != null)
             return indexedHuds;
         return indexedHuds = getAllHuds().collect(Collectors.toMap(JarvisHud::getHudId, Function.identity()));
@@ -80,7 +81,7 @@ public class JarvisContainer extends Jarvis {
         return getHudEditor(lastScreen, rStream.collect(Collectors.toList()));
     }
 
-    public @Nullable Map<@NotNull Identifier, @NotNull JarvisHud> indexedHuds = null;
+    public @Nullable Map<@NotNull ResourceLocation, @NotNull JarvisHud> indexedHuds = null;
 
     public void finishLoading() {
         plugins.forEach(it -> it.onInitialize(this));
@@ -90,25 +91,25 @@ public class JarvisContainer extends Jarvis {
         dispatcher.register(LiteralArgumentBuilder.<S>literal("jarvis")
             .then(LiteralArgumentBuilder.<S>literal("gui")
                 .executes(context -> {
-                    MinecraftClient.getInstance().send(() -> MinecraftClient.getInstance().setScreen(this.getHudEditor(null)));
+                    Minecraft.getInstance().submit(() -> Minecraft.getInstance().setScreen(this.getHudEditor(null)));
                     return 0;
                 }))
             .then(LiteralArgumentBuilder.<S>literal("options")
                 .executes(context -> {
-                    MinecraftClient.getInstance().send(() -> MinecraftClient.getInstance().setScreen(
+                    Minecraft.getInstance().submit(() -> Minecraft.getInstance().setScreen(
                         new JarvisConfigSearch(this, null, getAllPlugins().flatMap(it -> it.getAllConfigOptions().stream()
                             .map(opt -> new ConfigOptionWithCustody(it, opt))).collect(Collectors.toList()))));
                     return 0;
                 })));
     }
 
-    public Text getModName(JarvisPlugin plugin) {
-        Text name = plugin.getName();
+    public Component getModName(JarvisPlugin plugin) {
+        Component name = plugin.getName();
         if (name != null) return name;
         return loaderSupport.getModName(plugin.getModId()).get();
     }
 
     public void hudKeyBindingPressed() {
-        MinecraftClient.getInstance().send(() -> MinecraftClient.getInstance().setScreen(this.getHudEditor(null)));
+        Minecraft.getInstance().submit(() -> Minecraft.getInstance().setScreen(this.getHudEditor(null)));
     }
 }

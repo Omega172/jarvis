@@ -1,8 +1,7 @@
 package moe.nea.jarvis.api;
 
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3x2f;
 import org.joml.Vector2ic;
@@ -12,9 +11,9 @@ import java.util.Set;
 
 public interface JarvisHud {
     /**
-     * The id of this hud. The {@link Identifier#getNamespace()} must be the {@link JarvisPlugin#getModId()}.
+     * The id of this hud. The {@link ResourceLocation#getNamespace()} must be the {@link JarvisPlugin#getModId()}.
      */
-    @NotNull Identifier getHudId();
+    @NotNull ResourceLocation getHudId();
 
     /**
      * Use {@link #getEffectivePosition} if this hud is anchorable.
@@ -51,7 +50,7 @@ public interface JarvisHud {
     /**
      * @return the label of this hud element
      */
-    @NotNull Text getLabel();
+    @NotNull Component getLabel();
 
     /**
      * An interface indicating a {@link JarvisHud} can be scaled.
@@ -74,7 +73,7 @@ public interface JarvisHud {
         return getEffectivePosition(jarvis, new HashSet<>());
     }
 
-    default Vector2ic getEffectivePosition(Jarvis jarvis, Set<Identifier> visited) {
+    default Vector2ic getEffectivePosition(Jarvis jarvis, Set<ResourceLocation> visited) {
         return getPosition();
     }
 

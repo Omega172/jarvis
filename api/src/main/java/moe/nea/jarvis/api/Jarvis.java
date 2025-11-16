@@ -1,7 +1,7 @@
 package moe.nea.jarvis.api;
 
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -24,9 +24,9 @@ public abstract class Jarvis {
     /**
      * @return an index of all jarvis HUDs
      */
-    public abstract @Unmodifiable @NotNull Map<@NotNull Identifier, @NotNull JarvisHud> getIndexedHuds();
+    public abstract @Unmodifiable @NotNull Map<@NotNull ResourceLocation, @NotNull JarvisHud> getIndexedHuds();
 
-    public @NotNull Optional<@NotNull JarvisHud> getHud(@NotNull Identifier id) {
+    public @NotNull Optional<@NotNull JarvisHud> getHud(@NotNull ResourceLocation id) {
         return Optional.ofNullable(getIndexedHuds().get(id));
     }
 

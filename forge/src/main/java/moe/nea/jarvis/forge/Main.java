@@ -6,13 +6,14 @@ import moe.nea.jarvis.impl.JarvisContainer;
 import moe.nea.jarvis.impl.JarvisUtil;
 import moe.nea.jarvis.impl.LoaderSupport;
 import moe.nea.jarvis.impl.test.TestPluginClass;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.InterModComms;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
@@ -32,32 +33,31 @@ import java.util.function.Supplier;
 
 @Mod(JarvisConstants.MODID)
 public class Main {
-    Supplier<Function<String, Optional<Text>>> nameGenerator = () -> ignored -> Optional.empty();
+    Supplier<Function<String, Optional<Component>>> nameGenerator = () -> ignored -> Optional.empty();
     JarvisContainer jarvisContainer = JarvisContainer.init(new LoaderSupport() {
         @Override
-        public Optional<Text> getModName(String modid) {
-            Optional<Text> connectedModId = nameGenerator.get().apply(modid);
+        public Optional<Component> getModName(String modid) {
+            Optional<Component> connectedModId = nameGenerator.get().apply(modid);
             if (connectedModId.isPresent()) return connectedModId;
-            return Optional.of(Text.literal(FMLLoader.getLoadingModList().getModFileById(modid).getMods().stream().findFirst().get().getDisplayName()));
+            return Optional.of(Component.literal(FMLLoader.getLoadingModList().getModFileById(modid).getMods().stream().findFirst().get().getDisplayName()));
         }
     });
 
-    public Main() {
+    public Main(FMLJavaModLoadingContext ctx) {
         if (FMLEnvironment.dist.isClient()) {
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onDequeue);
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onEnqueue);
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onComplete);
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onRegisterKeyBindings);
+            var modGroup = ctx.getModBusGroup();
+            InterModProcessEvent.getBus(modGroup).addListener(this::onDequeue);
+            InterModEnqueueEvent.getBus(modGroup).addListener(this::onEnqueue);
+            FMLLoadCompleteEvent.getBus(modGroup).addListener(this::onComplete);
+            RegisterKeyMappingsEvent.BUS.addListener(this::onRegisterKeyBindings);
             MinecraftForge.EVENT_BUS.register(this);
         }
     }
 
     @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
-            while (jarvisContainer.hudKeyBinding.wasPressed()) {
-                jarvisContainer.hudKeyBindingPressed();
-            }
+    public void onClientTick(TickEvent.ClientTickEvent.Post event) {
+        while (jarvisContainer.hudKeyBinding.consumeClick()) {
+            jarvisContainer.hudKeyBindingPressed();
         }
     }
 

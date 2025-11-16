@@ -10,7 +10,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,14 +22,14 @@ public class Main implements ClientModInitializer {
         List<JarvisPlugin> jarvisPlugins = FabricLoader.getInstance().getEntrypoints("jarvis", JarvisPlugin.class);
         JarvisContainer container = JarvisContainer.init(new LoaderSupport() {
             @Override
-            public Optional<Text> getModName(String modid) {
-                return FabricLoader.getInstance().getModContainer(modid).map(it -> Text.literal(it.getMetadata().getName()));
+            public Optional<Component> getModName(String modid) {
+                return FabricLoader.getInstance().getModContainer(modid).map(it -> Component.literal(it.getMetadata().getName()));
             }
         });
         container.plugins.addAll(jarvisPlugins);
         var hudKeybind = KeyBindingHelper.registerKeyBinding(container.hudKeyBinding);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (hudKeybind.wasPressed()) {
+            while (hudKeybind.consumeClick()) {
                 container.hudKeyBindingPressed();
             }
         });

@@ -1,7 +1,7 @@
 package moe.nea.jarvis.api;
 
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -27,19 +27,19 @@ public interface JarvisConfigOption {
     /**
      * @return the title of this option
      */
-    @NotNull Text title();
+    @NotNull Component title();
 
     /**
      * @return the category of this option
      */
-    default @Nullable Text category() {
+    default @Nullable Component category() {
         return null;
     }
 
     /**
      * @return the description of this option
      */
-    @NotNull @Unmodifiable List<@NotNull Text> description();
+    @NotNull @Unmodifiable List<@NotNull Component> description();
 
     /**
      * Calling this function should return a screen for editing this config option. It may also jump to a page containing

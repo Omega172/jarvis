@@ -2,7 +2,7 @@ import net.fabricmc.loom.api.LoomGradleExtensionAPI
 
 plugins {
     id("architectury-plugin") version "3.4-SNAPSHOT"
-    id("dev.architectury.loom") version "1.10-SNAPSHOT" apply false
+    id("dev.architectury.loom") version "1.13-SNAPSHOT" apply false
     `maven-publish`
 }
 
@@ -17,11 +17,10 @@ architectury {
 
 subprojects {
     apply(plugin = "dev.architectury.loom")
-
+    val loom = the<net.fabricmc.loom.api.LoomGradleExtensionAPI>()
     dependencies {
         "minecraft"("com.mojang:minecraft:${minecraft_version}")
-        // The following line declares the yarn mappings you may select this one as well.
-        "mappings"("net.fabricmc:yarn:${yarn_version}:v2")
+        "mappings"(loom.officialMojangMappings())
     }
 }
 

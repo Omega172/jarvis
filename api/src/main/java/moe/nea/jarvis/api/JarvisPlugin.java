@@ -1,6 +1,6 @@
 package moe.nea.jarvis.api;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -36,7 +36,7 @@ public interface JarvisPlugin {
     /**
      * @return the name of this mod (defaults to mod name specified by launcher)
      */
-    default @Nullable Text getName() {
+    default @Nullable Component getName() {
         return null;
     }
 

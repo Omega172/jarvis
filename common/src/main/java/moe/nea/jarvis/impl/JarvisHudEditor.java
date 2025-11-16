@@ -4,10 +4,12 @@ import moe.nea.jarvis.api.JarvisAnchor;
 import moe.nea.jarvis.api.JarvisHud;
 import moe.nea.jarvis.api.JarvisPlugin;
 import moe.nea.jarvis.api.Point;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
@@ -28,7 +30,7 @@ public class JarvisHudEditor extends Screen {
     private final JarvisContainer container;
 
     public JarvisHudEditor(Screen lastScreen, List<JarvisHud> huds, JarvisContainer container) {
-        super(Text.translatable("jarvis.editor"));
+        super(Component.translatable("jarvis.editor"));
         this.lastScreen = lastScreen;
         this.huds = huds;
         this.container = container;
@@ -46,20 +48,20 @@ public class JarvisHudEditor extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        assert client != null;
-        context.drawCenteredTextWithShadow(client.textRenderer,
-            Text.translatable("jarvis.editor.title").setStyle(Style.EMPTY.withColor(new Color(100, 200, 255, 255).getRGB())),
+        assert minecraft != null;
+        context.drawCenteredString(minecraft.font,
+            Component.translatable("jarvis.editor.title").setStyle(Style.EMPTY.withColor(new Color(100, 200, 255, 255).getRGB())),
             width / 2, 20, -1);
-        context.drawCenteredTextWithShadow(client.textRenderer,
-            Text.translatable("jarvis.editor.scaleBlurb").setStyle(Style.EMPTY.withColor(new Color(200, 200, 200, 255).getRGB())), width / 2, 35, -1);
+        context.drawCenteredString(minecraft.font,
+            Component.translatable("jarvis.editor.scaleBlurb").setStyle(Style.EMPTY.withColor(new Color(200, 200, 200, 255).getRGB())), width / 2, 35, -1);
 
 
         boolean hasHoveredAny = grabbedHud != null;
         for (JarvisHud hud : huds) {
-            context.getMatrices().pushMatrix();
-            hud.applyTransformations(this.container, context.getMatrices());
+            context.pose().pushMatrix();
+            hud.applyTransformations(this.container, context.pose());
             boolean hovered = grabbedHud == hud;
             if (!hasHoveredAny && isOverlayHovered(hud, mouseX, mouseY)) {
                 hovered = true;
@@ -68,11 +70,11 @@ public class JarvisHudEditor extends Screen {
             BinaryInterpolator hoverInterpolator = hoverProgress.get(hud);
             hoverInterpolator.lerpTo(hovered ? 1 : 0);
             fillFadeOut(context, hud.getEffectiveWidth(), hud.getEffectiveHeight(), 1F);
-            context.drawBorder(0, 0, hud.getEffectiveWidth(), hud.getEffectiveHeight(),
+            JarvisUtil.drawOutlineTrans(context, 0, 0, hud.getEffectiveWidth(), hud.getEffectiveHeight(),
                 hoverInterpolator.lerp(new Color(0xFF343738, true), new Color(0xFF85858A, true)).getRGB()
             );
-            context.drawCenteredTextWithShadow(client.textRenderer, hud.getLabel(), hud.getEffectiveWidth() / 2, hud.getEffectiveHeight() / 2, -1);
-            context.getMatrices().popMatrix();
+            context.drawCenteredString(minecraft.font, hud.getLabel(), hud.getEffectiveWidth() / 2, hud.getEffectiveHeight() / 2, -1);
+            context.pose().popMatrix();
         }
 
         if (JarvisUtil.isTest) {
@@ -83,13 +85,15 @@ public class JarvisHudEditor extends Screen {
         }
     }
 
-    public void fillFadeOut(DrawContext drawContext, int width, int height, float opaquePercentage) {
+    public void fillFadeOut(GuiGraphics drawContext, int width, int height, float opaquePercentage) {
         drawContext.fill(0, 0, width, height, 0x80000000);
     }
 
-
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent mouseButtonEvent, boolean bl) {
+        var button = mouseButtonEvent.button();
+        var mouseX = mouseButtonEvent.x();
+        var mouseY = mouseButtonEvent.y();
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             if (grabbedHud != null)
                 return false;
@@ -111,17 +115,17 @@ public class JarvisHudEditor extends Screen {
             System.out.printf("Scaling in relation to %s (%s). Scale per distance: %.5f%n", opposite, oppositeCorner, scalePerDistance);
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(mouseButtonEvent, bl);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if ((button == GLFW.GLFW_MOUSE_BUTTON_LEFT && !isScaling)
-            || (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && isScaling)) {
+    public boolean mouseReleased(MouseButtonEvent mouseButtonEvent) {
+        if ((mouseButtonEvent.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT && !isScaling)
+            || (mouseButtonEvent.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT && isScaling)) {
             tryReleaseOverlay();
             return true;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(mouseButtonEvent);
     }
 
     @Override
@@ -134,9 +138,9 @@ public class JarvisHudEditor extends Screen {
     }
 
     @Override
-    public void close() {
-        assert client != null;
-        client.setScreen(lastScreen);
+    public void onClose() {
+        assert minecraft != null;
+        minecraft.setScreen(lastScreen);
         container.getAllPlugins().forEach(JarvisPlugin::onHudEditorClosed);
     }
 

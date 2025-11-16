@@ -5,10 +5,10 @@ import moe.nea.jarvis.api.JarvisConstants;
 import moe.nea.jarvis.api.JarvisHud;
 import moe.nea.jarvis.api.JarvisPlugin;
 import moe.nea.jarvis.impl.JarvisUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
@@ -35,13 +35,13 @@ public class TestPluginClass implements JarvisPlugin {
         Vector2i position = new Vector2i();
 
         @Override
-        public @NotNull Text getLabel() {
-            return Text.literal("Test HUD Element");
+        public @NotNull Component getLabel() {
+            return Component.literal("Test HUD Element");
         }
 
         @Override
-        public @NotNull Identifier getHudId() {
-            return Identifier.of(JarvisConstants.MODID, "test_hud");
+        public @NotNull ResourceLocation getHudId() {
+            return ResourceLocation.fromNamespaceAndPath(JarvisConstants.MODID, "test_hud");
         }
 
         @Override
@@ -76,31 +76,31 @@ public class TestPluginClass implements JarvisPlugin {
     };
 
     JarvisConfigOption ofOption(String title, String... description) {
-        List<Text> desc = Stream.of(description).map(Text::literal).collect(Collectors.toList());
+        List<Component> desc = Stream.of(description).map(Component::literal).collect(Collectors.toList());
         return new JarvisConfigOption() {
             @Override
-            public @NotNull Text title() {
-                return Text.literal(title);
+            public @NotNull Component title() {
+                return Component.literal(title);
             }
 
             @Override
-            public @NotNull List<@NotNull Text> description() {
+            public @NotNull List<@NotNull Component> description() {
                 return desc;
             }
 
             @Override
             public @NotNull Screen jumpTo(@Nullable Screen parentScreen) {
                 assert parentScreen != null;
-                MinecraftClient.getInstance().player.sendMessage(Text.literal("jumpTo invoked: ").append(title), false);
+                Minecraft.getInstance().player.displayClientMessage(Component.literal("jumpTo invoked: ").append(title), false);
                 return parentScreen;
             }
         };
     }
 
     @Override
-    public @Nullable Text getName() {
+    public @Nullable Component getName() {
         if (true) return null;
-        return Text.literal("Jarvis");
+        return Component.literal("Jarvis");
     }
 
     @Override

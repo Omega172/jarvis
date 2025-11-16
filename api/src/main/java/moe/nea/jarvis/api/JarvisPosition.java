@@ -2,7 +2,7 @@ package moe.nea.jarvis.api;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
@@ -29,7 +29,7 @@ public record JarvisPosition(
             VECTOR_2I_CODEC.fieldOf("position").forGetter(JarvisPosition::position)
         ).apply(instance, JarvisPosition::new));
 
-    public Vector2ic resolve(Jarvis jarvis, Set<Identifier> set) {
+    public Vector2ic resolve(Jarvis jarvis, Set<ResourceLocation> set) {
         return this.link.flatMap(link -> {
             set.add(link.parent());
             return jarvis.getHud(link.parent())
